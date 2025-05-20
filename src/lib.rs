@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use reqwest::Client;
 use anyhow::Result;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct HelixDB {
@@ -11,7 +11,11 @@ pub struct HelixDB {
 // This trait allows users to implement their own client if needed
 pub trait HelixDBClient {
     fn new(port: Option<u16>) -> Self;
-    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R>
+    async fn query<T, R>(
+        &self,
+        endpoint: &str,
+        data: &T,
+    ) -> impl std::future::Future<Output = Result<R>> + Send
     where
         T: Serialize,
         R: for<'de> Deserialize<'de>;
@@ -31,12 +35,8 @@ impl HelixDB {
         R: for<'de> Deserialize<'de>,
     {
         let url = format!("http://localhost:{}/{}", self.port, endpoint);
-        
-        let response = self.client
-            .post(&url)
-            .json(data)
-            .send()
-            .await?;
+
+        let response = self.client.post(&url).json(data).send().await?;
 
         let result = response.json().await?;
         Ok(result)
@@ -50,7 +50,7 @@ mod tests {
     #[tokio::test]
     async fn test_basic_query() {
         let client = HelixDB::new(None);
-        
+
         // Example test structure
         #[derive(Serialize)]
         struct UserInput {
@@ -73,4 +73,4 @@ mod tests {
         // Note: This test will fail unless HelixDB is running locally
         let _result: UserOutput = client.query("addUser", &input).await.unwrap();
     }
-} 
+}

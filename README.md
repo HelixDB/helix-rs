@@ -15,7 +15,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-helix-rs = "0.1.0"
+helix-db= "0.1.0"
 ```
 
 ## Quick Start
