@@ -37,7 +37,8 @@ impl HelixDB {
         let url = format!("http://localhost:{}/{}", self.port, endpoint);
 
         let response = self.client.post(&url).json(data).send().await?;
-
+        println!("Response: {}", response.text().await?);
+        let response = self.client.post(&url).json(data).send().await?;
         let result = response.json().await?;
         Ok(result)
     }
@@ -70,7 +71,12 @@ mod tests {
             age: 20,
         };
 
+        #[derive(Deserialize)]
+        struct Result {
+            res: Vec<UserOutput>,
+        }
+
         // Note: This test will fail unless HelixDB is running locally
-        let _result: UserOutput = client.query("addUser", &input).await.unwrap();
+        let _result: Result = client.query("add_user", &input).await.unwrap();
     }
 }
