@@ -11,7 +11,7 @@ pub struct HelixDB {
 // This trait allows users to implement their own client if needed
 pub trait HelixDBClient {
     fn new(port: Option<u16>) -> Self;
-    async fn query<T, R>(
+    fn query<T, R>(
         &self,
         endpoint: &str,
         data: &T,
