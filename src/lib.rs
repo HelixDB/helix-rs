@@ -6,38 +6,38 @@ use serde::{Deserialize, Serialize};
 pub struct HelixDB {
     port: u16,
     client: Client,
+    endpoint: String,
 }
 
 // This trait allows users to implement their own client if needed
 pub trait HelixDBClient {
-    fn new(port: Option<u16>) -> Self;
+    fn new(endpoint: Option<&str>, port: Option<u16>) -> Self;
     fn query<T, R>(
         &self,
         endpoint: &str,
         data: &T,
     ) -> impl std::future::Future<Output = Result<R>> + Send
     where
-        T: Serialize,
+        T: Serialize + Sync,
         R: for<'de> Deserialize<'de>;
 }
 
-impl HelixDB {
-    pub fn new(port: Option<u16>) -> Self {
+impl HelixDBClient for HelixDB {
+    fn new(endpoint: Option<&str>, port: Option<u16>) -> Self {
         Self {
             port: port.unwrap_or(6969),
             client: Client::new(),
+            endpoint: endpoint.unwrap_or("localhost").to_string(),
         }
     }
 
-    pub async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R>
+    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R>
     where
-        T: Serialize,
+        T: Serialize + Sync,
         R: for<'de> Deserialize<'de>,
     {
-        let url = format!("http://localhost:{}/{}", self.port, endpoint);
+        let url = format!("http://{}:{}/{}", self.endpoint, self.port, endpoint);
 
-        let response = self.client.post(&url).json(data).send().await?;
-        println!("Response: {}", response.text().await?);
         let response = self.client.post(&url).json(data).send().await?;
         let result = response.json().await?;
         Ok(result)
@@ -50,7 +50,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_basic_query() {
-        let client = HelixDB::new(None);
+        let client = HelixDB::new(None, None);
 
         // Example test structure
         #[derive(Serialize)]
