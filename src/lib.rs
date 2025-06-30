@@ -27,7 +27,7 @@ impl HelixDBClient for HelixDB {
         Self {
             port: port.unwrap_or(6969),
             client: Client::new(),
-            endpoint: endpoint.unwrap_or("localhost").to_string(),
+            endpoint: endpoint.unwrap_or("http://localhost").to_string(),
         }
     }
 
@@ -36,7 +36,7 @@ impl HelixDBClient for HelixDB {
         T: Serialize + Sync,
         R: for<'de> Deserialize<'de>,
     {
-        let url = format!("http://{}:{}/{}", self.endpoint, self.port, endpoint);
+        let url = format!("{}:{}/{}", self.endpoint, self.port, endpoint);
 
         let response = self.client.post(&url).json(data).send().await?;
         let result = response.json().await?;
