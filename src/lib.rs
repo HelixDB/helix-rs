@@ -73,7 +73,7 @@ mod tests {
 
         #[derive(Deserialize)]
         struct Result {
-            res: Vec<UserOutput>,
+            pub user: UserOutput,
         }
 
         // Note: This test will fail unless HelixDB is running locally

@@ -1,6 +1,6 @@
 [package]
-name = "helix-db"
-version = "0.1.3"
+name = "helix-rs"
+version = "0.1.0"
 edition = "2021"
 description = "Rust SDK for HelixDB"
 license = "AGPL-3.0"
