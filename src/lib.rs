@@ -37,11 +37,11 @@ impl HelixDBClient for HelixDB {
         R: for<'de> Deserialize<'de>,
     {
         let port = match self.port {
-            Some(port) => port.to_string(),
+            Some(port) => format!(":{}", port),
             None => "".to_string(),
         };
 
-        let url = format!("{}:{}/{}", self.endpoint, port, endpoint);
+        let url = format!("{}{}/{}", self.endpoint, port, endpoint);
 
         let response = self.client.post(&url).json(data).send().await?;
         let result = response.json().await?;
