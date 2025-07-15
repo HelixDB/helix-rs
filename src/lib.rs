@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct HelixDB {
-    port: u16,
+    port: Option<u16>,
     client: Client,
     endpoint: String,
 }
@@ -25,7 +25,7 @@ pub trait HelixDBClient {
 impl HelixDBClient for HelixDB {
     fn new(endpoint: Option<&str>, port: Option<u16>) -> Self {
         Self {
-            port: port.unwrap_or(6969),
+            port: port,
             client: Client::new(),
             endpoint: endpoint.unwrap_or("http://localhost").to_string(),
         }
@@ -36,7 +36,12 @@ impl HelixDBClient for HelixDB {
         T: Serialize + Sync,
         R: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}:{}/{}", self.endpoint, self.port, endpoint);
+        let port = match self.port {
+            Some(port) => port.to_string(),
+            None => "".to_string(),
+        };
+
+        let url = format!("{}:{}/{}", self.endpoint, port, endpoint);
 
         let response = self.client.post(&url).json(data).send().await?;
         let result = response.json().await?;
