@@ -9,15 +9,6 @@ A Rust SDK for interacting with HelixDB - providing a simple, type-safe interfac
 - Configurable port settings
 - Custom client implementation support via `HelixDBClient` trait
 
-## Installation
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-helix-db= "0.1.0"
-```
-
 ## Quick Start
 
 ```rust
