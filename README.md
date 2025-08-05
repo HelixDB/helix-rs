@@ -41,7 +41,7 @@ struct UserOutput {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize the client
-    let client = HelixDB::new(None); // Uses default port 6969
+    let client = HelixDB::new(None, None, None); // Uses default port 6969
 
     // Create a user
     let input = UserInput {
@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
         age: 20,
     };
 
-    let result: UserOutput = client.query("addUser", &input).await?;
+    let result = client.query::<UserInput, UserOutput>("add_user", &input).await?;
     println!("Created user with ID: {}", result.id);
     Ok(())
 }
@@ -62,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
 You can specify a custom port when initializing the client:
 
 ```rust
-let client = HelixDB::new(Some(8080)); // Uses port 8080
+let client = HelixDB::new(None, Some(8080), None); // Uses port 8080
 ```
 
 ### Custom Client
@@ -77,7 +77,7 @@ struct MyCustomClient {
 }
 
 impl HelixDBClient for MyCustomClient {
-    fn new(port: Option<u16>) -> Self {
+    fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self {
         // Your initialization logic
     }
 

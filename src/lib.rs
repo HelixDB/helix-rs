@@ -7,11 +7,12 @@ pub struct HelixDB {
     port: Option<u16>,
     client: Client,
     endpoint: String,
+    api_key: Option<String>,
 }
 
 // This trait allows users to implement their own client if needed
 pub trait HelixDBClient {
-    fn new(endpoint: Option<&str>, port: Option<u16>) -> Self;
+    fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self;
     fn query<T, R>(
         &self,
         endpoint: &str,
@@ -23,11 +24,12 @@ pub trait HelixDBClient {
 }
 
 impl HelixDBClient for HelixDB {
-    fn new(endpoint: Option<&str>, port: Option<u16>) -> Self {
+    fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self {
         Self {
             port: port,
             client: Client::new(),
             endpoint: endpoint.unwrap_or("http://localhost").to_string(),
+            api_key: api_key.map(|key| key.to_string()),
         }
     }
 
@@ -43,7 +45,14 @@ impl HelixDBClient for HelixDB {
 
         let url = format!("{}{}/{}", self.endpoint, port, endpoint);
 
-        let response = self.client.post(&url).json(data).send().await?;
+        let mut request = self.client.post(&url).json(data);
+
+        // Add API key header if provided
+        if let Some(ref api_key) = self.api_key {
+            request = request.header("x-api-key", api_key);
+        }
+
+        let response = request.send().await?;
         let result = response.json().await?;
         Ok(result)
     }
@@ -55,7 +64,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_basic_query() {
-        let client = HelixDB::new(None, None);
+        let client = HelixDB::new(None, None, None);
 
         // Example test structure
         #[derive(Serialize)]
@@ -82,6 +91,38 @@ mod tests {
         }
 
         // Note: This test will fail unless HelixDB is running locally
+        let _result: Result = client.query("add_user", &input).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_query_with_api_key() {
+        let client = HelixDB::new(None, None, Some("test-api-key"));
+
+        // Example test structure
+        #[derive(Serialize)]
+        struct UserInput {
+            name: String,
+            age: i32,
+        }
+
+        #[derive(Deserialize)]
+        struct UserOutput {
+            id: String,
+            name: String,
+            age: i32,
+        }
+
+        let input = UserInput {
+            name: "Jane".to_string(),
+            age: 25,
+        };
+
+        #[derive(Deserialize)]
+        struct Result {
+            pub user: UserOutput,
+        }
+
+        // Note: This test will fail unless HelixDB is running locally with API key support
         let _result: Result = client.query("add_user", &input).await.unwrap();
     }
 }
