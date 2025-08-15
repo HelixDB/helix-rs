@@ -1,6 +1,7 @@
 use anyhow::Result;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+pub use helix_macros::TraversalValue;
 
 #[derive(Debug)]
 pub struct HelixDB {
