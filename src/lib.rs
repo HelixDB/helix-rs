@@ -1,7 +1,9 @@
+extern crate helix_macros;
+pub use helix_macros::helix_node;
+
 use anyhow::Result;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-pub use helix_macros::TraversalValue;
 
 #[derive(Debug)]
 pub struct HelixDB {
@@ -62,6 +64,13 @@ impl HelixDBClient for HelixDB {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::helix_node;
+
+    #[helix_node]
+    struct User {
+        name: String,
+        age: i32,
+    }
 
     #[tokio::test]
     async fn test_basic_query() {
