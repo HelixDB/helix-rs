@@ -1,9 +1,10 @@
 extern crate helix_macros;
+
 pub use helix_macros::helix_node;
 
-use anyhow::Result;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct HelixDB {
@@ -13,20 +14,31 @@ pub struct HelixDB {
     api_key: Option<String>,
 }
 
+#[derive(Debug, Error)]
+pub enum HelixError {
+    #[error("Error communicating with server: {0}")]
+    ReqwestError(#[from] reqwest::Error),
+    #[error("Got Error from server: {details}")]
+    RemoteError { details: String },
+}
+
 // This trait allows users to implement their own client if needed
 pub trait HelixDBClient {
+    type Err: std::error::Error;
+
     fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self;
     fn query<T, R>(
         &self,
         endpoint: &str,
         data: &T,
-    ) -> impl std::future::Future<Output = Result<R>> + Send
+    ) -> impl std::future::Future<Output = Result<R, Self::Err>> + Send
     where
         T: Serialize + Sync,
         R: for<'de> Deserialize<'de>;
 }
 
 impl HelixDBClient for HelixDB {
+    type Err = HelixError;
     fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self {
         Self {
             port: port,
@@ -36,7 +48,7 @@ impl HelixDBClient for HelixDB {
         }
     }
 
-    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R>
+    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R, HelixError>
     where
         T: Serialize + Sync,
         R: for<'de> Deserialize<'de>,
@@ -56,15 +68,29 @@ impl HelixDBClient for HelixDB {
         }
 
         let response = request.send().await?;
-        let result = response.json().await?;
-        Ok(result)
+
+        match response.status() {
+            StatusCode::OK => response.json().await.map_err(Into::into),
+            // code => Err(HelixError::RemoteError{details: response.text().await.unwrap_or(code.canonical_reason().unwrap_or(format!()))}),
+            code => match response.text().await {
+                Ok(t) => Err(HelixError::RemoteError { details: t }),
+                Err(_) => match code.canonical_reason() {
+                    Some(r) => Err(HelixError::RemoteError {
+                        details: r.to_string(),
+                    }),
+                    None => Err(HelixError::RemoteError {
+                        details: format!("unkown error with code: {code}"),
+                    }),
+                },
+            },
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::helix_node;
+    use super::*;
 
     #[helix_node]
     struct User {
