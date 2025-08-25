@@ -14,6 +14,7 @@ A Rust SDK for interacting with HelixDB - providing a simple, type-safe interfac
 ```bash
 cargo add helix-rs
 cargo add serde
+cargo add tokio
 ```
 
 ```rust
