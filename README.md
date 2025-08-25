@@ -40,13 +40,20 @@ async fn main() -> Result<(), HelixError> {
     let client = HelixDB::new(None, None, None); // Uses default port 6969
 
     // Create a user
-    let input = UserInput {
+    
+    let input = AddUserInput {
         name: "John".to_string(),
         age: 20,
     };
 
-    let result = client.query::<UserInput, UserOutput>("add_user", &input).await?;
-    println!("Created user with ID: {}", result.id);
+    // Define the output structure
+    #[derive(Deserialize)]
+    struct Result {
+        user: AddUserOutput,
+    }
+
+    let result = client.query::<UserInput, Result>("add_user", &input).await?;
+    println!("Created user with ID: {}", result.user.id);
     Ok(())
 }
 ```
