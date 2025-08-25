@@ -97,6 +97,6 @@ impl HelixDBClient for MyCustomClient {
 
 ## Requirements
 
-- Rust 1.56 or higher
+- Rust 1.88.0 or higher
 - Running HelixDB instance
 - Tokio runtime for async operations
