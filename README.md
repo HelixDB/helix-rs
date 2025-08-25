@@ -11,6 +11,11 @@ A Rust SDK for interacting with HelixDB - providing a simple, type-safe interfac
 
 ## Quick Start
 
+```bash
+cargo add helix-rs
+cargo add serde
+```
+
 ```rust
 use helix_rs::HelixDB;
 use serde::{Serialize, Deserialize};
@@ -30,7 +35,7 @@ struct UserOutput {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), HelixError> {
     // Initialize the client
     let client = HelixDB::new(None, None, None); // Uses default port 6969
 
@@ -61,21 +66,21 @@ let client = HelixDB::new(None, Some(8080), None); // Uses port 8080
 You can implement your own client by implementing the `HelixDBClient` trait:
 
 ```rust
-use helix_rs::HelixDBClient;
+use helix_rs::{HelixDBClient, HelixError};
 
 struct MyCustomClient {
     // Your implementation details
 }
 
 impl HelixDBClient for MyCustomClient {
-    type Err = CustomError;
+    type Err = HelixError;
     fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self {
         // Your initialization logic
     }
 
-    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R, CustomError>
+    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R, HelixError>
     where
-        T: Serialize,
+        T: Serialize + Sync,
         R: for<'de> Deserialize<'de>
     {
         // Your query implementation
