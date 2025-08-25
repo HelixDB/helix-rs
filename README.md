@@ -68,11 +68,12 @@ struct MyCustomClient {
 }
 
 impl HelixDBClient for MyCustomClient {
+    type Err = CustomError;
     fn new(endpoint: Option<&str>, port: Option<u16>, api_key: Option<&str>) -> Self {
         // Your initialization logic
     }
 
-    async fn query<T, R>(&self, endpoint: &str, data: &T) -> anyhow::Result<R>
+    async fn query<T, R>(&self, endpoint: &str, data: &T) -> Result<R, CustomError>
     where
         T: Serialize,
         R: for<'de> Deserialize<'de>
